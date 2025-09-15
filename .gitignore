@@ -1,0 +1,3 @@
+#  Data files (optional - keep large/raw data out of git)
+data/
+*.csv
