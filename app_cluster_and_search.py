@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-DF_PATH = "restaurants_with_clusters.pkl"
+DF_PATH = "restaurant_reviews_clustered.pkl"
 TFIDF_REV_PATH = "X_reviews.pkl"
 TFIDF_CUIS_PATH = "X_Cuisine.pkl"
 
