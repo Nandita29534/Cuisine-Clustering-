@@ -15,10 +15,10 @@ st.set_page_config(
 )
 
 DF_PATH = "restaurant_reviews_clustered.pkl"
-TFIDF_REV_PATH = "X_reviews.pkl"
-TFIDF_CUIS_PATH = "X_Cuisine.pkl"
+TFIDF_REV_PATH = "review_vectorizer.pkl"
+TFIDF_CUIS_PATH = "cuisine_vectorizer.pkl"
 DF_PATH2 = "df_cleaned_2.pkl"
-cuisnie_reviews_combined = "X_combined.pkl"
+
 
 
 def parse_cuisine_field(x):
@@ -83,8 +83,7 @@ def load_tfidf_artifacts():
         return None, None, None
     tfidf_rev = joblib.load(TFIDF_REV_PATH)
     tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
-    X_combined = joblib.load(cuisnie_reviews_combined)
-    return tfidf_rev, tfidf_cuis, X_combined
+    return tfidf_rev, tfidf_cuis
 
 
 
@@ -254,9 +253,9 @@ else:
     cities = sorted(df[df["city_group"] == city_group]["city"].dropna().unique())
     city = st.selectbox("City", cities)
 
-    tfidf_rev, tfidf_cuis, X_combined = load_tfidf_artifacts()
+    tfidf_rev, tfidf_cuis = load_tfidf_artifacts()
 
-    if tfidf_rev is None:
+    if tfidf_rev,tfidf_cuis is None:
         st.error("Missing TF-IDF artifacts. Please upload tfidf_reviews.pkl, tfidf_cuisine.pkl, and X_combined.pkl")
     else:
         if query:
