@@ -20,7 +20,6 @@ TFIDF_CUIS_PATH = "cuisine_vectorizer.pkl"
 DF_PATH2 = "df_cleaned_2.pkl"
 
 
-
 def parse_cuisine_field(x):
     if pd.isna(x):
         return []
@@ -31,7 +30,7 @@ def parse_cuisine_field(x):
         try:
             lst = ast.literal_eval(s)
             if isinstance(lst, list):
-                return [str(i).strip() for i in lst if str(i).strip()]
+                return [str(i).strip() for i in lst if i and str(i).strip()]
         except Exception:
             pass
     if re.search(r"[;,/|]", s):
@@ -78,13 +77,13 @@ def load_df(path=DF_PATH, path2=DF_PATH2):
 
     return df
 
+
 def load_tfidf_artifacts():
-    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH) and os.path.exists(cuisnie_reviews_combined)):
-        return None, None, None
+    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH)):
+        return None, None
     tfidf_rev = joblib.load(TFIDF_REV_PATH)
     tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
     return tfidf_rev, tfidf_cuis
-
 
 
 df = load_df()
@@ -255,8 +254,8 @@ else:
 
     tfidf_rev, tfidf_cuis = load_tfidf_artifacts()
 
-    if tfidf_rev,tfidf_cuis is None:
-        st.error("Missing TF-IDF artifacts. Please upload tfidf_reviews.pkl, tfidf_cuisine.pkl, and X_combined.pkl")
+    if any(v is None for v in (tfidf_rev, tfidf_cuis)):
+        st.error("Missing TF-IDF artifacts")
     else:
         if query:
             # transform query into combined vector
