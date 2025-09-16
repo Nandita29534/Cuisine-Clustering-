@@ -18,7 +18,7 @@ DF_PATH = "restaurant_reviews_clustered.pkl"
 TFIDF_REV_PATH = "review_vectorizer.pkl"
 TFIDF_CUIS_PATH = "cuisine_vectorizer.pkl"
 DF_PATH2 = "df_cleaned_2.pkl"
-
+X_combined = "X_combined.pkl"
 
 def parse_cuisine_field(x):
     if pd.isna(x):
@@ -79,11 +79,12 @@ def load_df(path=DF_PATH, path2=DF_PATH2):
 
 
 def load_tfidf_artifacts():
-    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH)):
+    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH) and os.path.exists(X_combined)):
         return None, None
     tfidf_rev = joblib.load(TFIDF_REV_PATH)
     tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
-    return tfidf_rev, tfidf_cuis
+    X_combined = joblib.load(X_combined)
+    return tfidf_rev, tfidf_cuis,X_combined
 
 
 df = load_df()
@@ -252,9 +253,9 @@ else:
     cities = sorted(df[df["city_group"] == city_group]["city"].dropna().unique())
     city = st.selectbox("City", cities)
 
-    tfidf_rev, tfidf_cuis = load_tfidf_artifacts()
+    tfidf_rev, tfidf_cuis,X_combined = load_tfidf_artifacts()
 
-    if any(v is None for v in (tfidf_rev, tfidf_cuis)):
+    if any(v is None for v in (tfidf_rev, tfidf_cuis,X_combined)):
         st.error("Missing TF-IDF artifacts")
     else:
         if query:
