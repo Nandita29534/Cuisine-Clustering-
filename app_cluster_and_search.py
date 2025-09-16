@@ -267,7 +267,8 @@ else:
             # restrict to selected city_group + city
             mask = (df["city_group"] == city_group) & (df["city"] == city)
             subset_df = df[mask].reset_index(drop=True)
-            X_subset = X_combined[mask]
+            indices = df.index[mask].to_numpy()
+            X_subset = X_combined[indices]
 
             if len(subset_df) == 0:
                 st.warning("No restaurants found for this selection.")
