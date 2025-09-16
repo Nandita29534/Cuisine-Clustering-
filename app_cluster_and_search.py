@@ -246,7 +246,7 @@ if mode == "Cluster Explorer":
 # Mode 2: Search (placeholder + structure)
 # ---------------------------
 else:
-   st.title("🔎 Search (content-based)")
+    st.title("🔎 Search (content-based)")
     query = st.text_input("Type your search (e.g. 'vegan cafe amsterdam')", "")
 
     # make city_group + city mandatory
