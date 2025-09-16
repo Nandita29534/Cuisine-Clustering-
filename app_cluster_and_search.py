@@ -4,6 +4,9 @@ import numpy as np
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 import ast, re, os
+from sklearn.metrics.pairwise import cosine_similarity
+import joblib
+from scipy.sparse import hstack
 
 st.set_page_config(
     page_title="Restaurant Explorer",
@@ -73,6 +76,15 @@ def load_df(path=DF_PATH, path2=DF_PATH2):
         df["reviews_preprocessed"] = ""
 
     return df
+
+def load_tfidf_artifacts():
+    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH):
+        return None, None, None
+        tfidf_rev = joblib.load(TFIDF_REV_PATH)
+        tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
+        X_combined = hstack([tfidf_rev,tfidf_cuis])
+    return tfidf_rev, tfidf_cuis, X_combined
+
 
 
 df = load_df()
@@ -233,19 +245,41 @@ if mode == "Cluster Explorer":
 # Mode 2: Search (placeholder + structure)
 # ---------------------------
 else:
-    st.title("🔎 Search (content-based) — Coming Soon")
-    st.markdown(
-        "You can type a query (e.g. 'fast food in Amsterdam') and the app will match the query against restaurant review+cuisine TF-IDF vectors "
-        "and return top matches. To enable this mode upload the following files to the app folder:\n\n"
-        "- tfidf_reviews.pkl  (fitted TfidfVectorizer for reviews)\n- tfidf_cuisine.pkl  (fitted TfidfVectorizer for cuisine tags)\n- X_combined.pkl     (combined sparse matrix aligned with the dataframe rows)\n\n"
-        "When these files are present the search box below will become active."
-    )
+   st.title("🔎 Search (content-based)")
     query = st.text_input("Type your search (e.g. 'vegan cafe amsterdam')", "")
-    restrict_city_group = st.selectbox("Restrict to region (optional)", ["All"] + city_groups)
-    restrict_city = st.selectbox("Restrict to city (optional)", ["All"] + cities)
-    st.button("Search (will be active when TF-IDF artifacts are available)")
 
-    if os.path.exists(TFIDF_REV_PATH) and os.path.exists("X_combined.pkl"):
-        st.success("TF-IDF artifacts found — you can enable search mode by uncommenting the code block in the app.")
+    # make city_group + city mandatory
+    city_group = st.selectbox("Region (City Group)", city_groups)
+    cities = sorted(df[df["city_group"] == city_group]["city"].dropna().unique())
+    city = st.selectbox("City", cities)
+
+    tfidf_rev, tfidf_cuis, X_combined = load_tfidf_artifacts()
+
+    if tfidf_rev is None:
+        st.error("Missing TF-IDF artifacts. Please upload tfidf_reviews.pkl, tfidf_cuisine.pkl, and X_combined.pkl")
     else:
-        st.info("Artifacts not found. Upload tfidf_reviews.pkl and X_combined.pkl to enable search.")
+        if query:
+            # transform query into combined vector
+            q_rev = tfidf_rev.transform([query])
+            q_cuis = tfidf_cuis.transform([query])
+            q_vec = hstack([q_rev, q_cuis])
+
+            # restrict to selected city_group + city
+            mask = (df["city_group"] == city_group) & (df["city"] == city)
+            subset_df = df[mask].reset_index(drop=True)
+            X_subset = X_combined[mask]
+
+            if len(subset_df) == 0:
+                st.warning("No restaurants found for this selection.")
+            else:
+                # cosine similarity
+                sims = cosine_similarity(q_vec, X_subset).ravel()
+                subset_df["similarity"] = sims
+
+                # show top 20
+                top_results = subset_df.sort_values("similarity", ascending=False).head(20)
+                st.dataframe(
+                    top_results[
+                        ["restaurant_name", "cuisine", "rating", "cluster", "similarity"]
+                    ]
+                )
