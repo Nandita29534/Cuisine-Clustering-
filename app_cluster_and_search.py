@@ -79,7 +79,7 @@ def load_df(path=DF_PATH, path2=DF_PATH2):
 
 
 def load_tfidf_artifacts():
-    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH) and os.path.exists(X_combined)):
+    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH) and os.path.exists(X_COMBINED_PATH)):
         return None, None
     tfidf_rev = joblib.load(TFIDF_REV_PATH)
     tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
