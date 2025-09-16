@@ -14,6 +14,7 @@ st.set_page_config(
 DF_PATH = "restaurant_reviews_clustered.pkl"
 TFIDF_REV_PATH = "X_reviews.pkl"
 TFIDF_CUIS_PATH = "X_Cuisine.pkl"
+DF_PATH2 = "df_cleaned_2.pkl"
 
 
 def parse_cuisine_field(x):
@@ -42,15 +43,39 @@ def parse_cuisine_field(x):
 # load dataframe
 # ---------------------------
 @st.cache_data(show_spinner=True)
-def load_df(path=DF_PATH):
+def load_df(path=DF_PATH, path2=DF_PATH2):
     if not os.path.exists(path):
-        st.error(f"Data file not found at {path}. Place restaurants_with_clusters.pkl in the app folder.")
+        st.error(f"Data file not found at {path}. Place restaurant_reviews_clustered.pkl in the app folder.")
         return pd.DataFrame()
+
+    # Load main dataframe
     if path.endswith(".pkl"):
-        return pd.read_pickle(path)
+        df = pd.read_pickle(path)
+    else:
+        st.error("Unsupported file format. Only .pkl supported right now.")
+        return pd.DataFrame()
+
+    # Attach reviews_preprocessed if second file exists
+    if os.path.exists(path2):
+        df_reviews = pd.read_pickle(path2)
+        if "reviews_preprocessed" in df_reviews.columns:
+            if len(df) == len(df_reviews):
+                df["reviews_preprocessed"] = df_reviews["reviews_preprocessed"].values
+            else:
+                st.warning(
+                    f"Row mismatch: {len(df)} rows in {path}, but {len(df_reviews)} rows in {path2}. "
+                    "reviews_preprocessed not added."
+                )
+        else:
+            st.warning(f"No column 'reviews_preprocessed' found in {path2}.")
+    else:
+        st.info(f"Optional file {path2} not found. reviews_preprocessed will be empty.")
+        df["reviews_preprocessed"] = ""
+
+    return df
 
 
-df = load_df(DF_PATH)
+df = load_df()
 if df.empty:
     st.stop()
 
@@ -150,7 +175,6 @@ if mode == "Cluster Explorer":
         # LEFT: cuisine bar + rating histogram
         with left:
             st.subheader("Top Cuisines (selected scope)")
-            # flatten cuisine list
             cuisines_flat = [c for row in filtered["cuisine_list"] for c in row]
             if len(cuisines_flat) == 0:
                 st.info("No cuisine tags available for this selection.")
@@ -216,14 +240,11 @@ else:
         "- tfidf_reviews.pkl  (fitted TfidfVectorizer for reviews)\n- tfidf_cuisine.pkl  (fitted TfidfVectorizer for cuisine tags)\n- X_combined.pkl     (combined sparse matrix aligned with the dataframe rows)\n\n"
         "When these files are present the search box below will become active."
     )
-    # UI skeleton for future search mode
     query = st.text_input("Type your search (e.g. 'vegan cafe amsterdam')", "")
     restrict_city_group = st.selectbox("Restrict to region (optional)", ["All"] + city_groups)
     restrict_city = st.selectbox("Restrict to city (optional)", ["All"] + cities)
     st.button("Search (will be active when TF-IDF artifacts are available)")
 
-    # If files present, we could enable logic here (code to do query transform & similarity).
-    # We'll leave this as a placeholder for now.
     if os.path.exists(TFIDF_REV_PATH) and os.path.exists("X_combined.pkl"):
         st.success("TF-IDF artifacts found — you can enable search mode by uncommenting the code block in the app.")
     else:
