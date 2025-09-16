@@ -18,6 +18,7 @@ DF_PATH = "restaurant_reviews_clustered.pkl"
 TFIDF_REV_PATH = "X_reviews.pkl"
 TFIDF_CUIS_PATH = "X_Cuisine.pkl"
 DF_PATH2 = "df_cleaned_2.pkl"
+cuisnie_reviews_combined = "X_combined.pkl"
 
 
 def parse_cuisine_field(x):
@@ -78,11 +79,11 @@ def load_df(path=DF_PATH, path2=DF_PATH2):
     return df
 
 def load_tfidf_artifacts():
-    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH):
+    if not (os.path.exists(TFIDF_REV_PATH) and os.path.exists(TFIDF_CUIS_PATH) and os.path.exists(cuisnie_reviews_combined)):
         return None, None, None
-        tfidf_rev = joblib.load(TFIDF_REV_PATH)
-        tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
-        X_combined = hstack([tfidf_rev,tfidf_cuis])
+    tfidf_rev = joblib.load(TFIDF_REV_PATH)
+    tfidf_cuis = joblib.load(TFIDF_CUIS_PATH)
+    X_combined = joblib.load(cuisnie_reviews_combined)
     return tfidf_rev, tfidf_cuis, X_combined
 
 
